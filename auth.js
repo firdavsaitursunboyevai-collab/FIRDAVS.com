@@ -1,5 +1,5 @@
-const SUPABASE_URL = "https://supabase.co";
-const SUPABASE_KEY = "BU_YERGA_COPY_QILINGAN_KALITNI_QOYING";
+const SUPABASE_URL = "https://supabase.com";
+const SUPABASE_KEY = "sb_publishable_zpAfXMvyJgp8GEU3X7Jk1g_XRN2VS2V";
 
 const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
