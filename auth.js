@@ -1,19 +1,18 @@
-const SUPABASE_URL = "https://supabase.com";
-const SUPABASE_KEY = "sb_publishable_zpAfXMvyJgp8GEU3X7Jk1g_XRN2VS2V";
+var SUPABASE_URL = "https://" + "hpvxopflazxzfftlheim" + ".supabase.co";
+var SUPABASE_KEY = "sb_publishable_zpAFXMvyJgp8GEU3X7Jk1g_XRN2VS2V";
 
-const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-const ADMIN_LOGIN = "admin";
-const ADMIN_PASS = "admin123";
+var ADMIN_LOGIN = "admin";
+var ADMIN_PASS = "admin123";
 
 async function sbFetch(table, method = "GET", body = null, query = "") {
+    var client = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     if (method === "POST") {
-        const { data, error } = await sb.from(table).insert([body]).select();
+        const { data, error } = await client.from(table).insert([body]).select();
         if (error) throw new Error(error.message);
         return data;
     }
     if (method === "GET") {
-        let q = sb.from(table).select("*");
+        let q = client.from(table).select("*");
         if (query.includes("login=eq.")) {
             const loginVal = query.split("login=eq.")[1].split("&")[0];
             q = q.eq("login", loginVal);
@@ -31,11 +30,12 @@ async function sbFetch(table, method = "GET", body = null, query = "") {
     }
     if (method === "PATCH") {
         const idVal = query.split("id=eq.")[1];
-        const { data, error } = await sb.from(table).update(body).eq("id", idVal);
+        const { data, error } = await client.from(table).update(body).eq("id", idVal);
         if (error) throw new Error(error.message);
         return data;
     }
 }
+
 
 function checkAuthSession() {
     const currentUser = JSON.parse(localStorage.getItem("edu_current_user") || "null");

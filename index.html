@@ -241,8 +241,9 @@ Akkauntingiz yo'qmi? <b style="color:#4f46e5;cursor:pointer" onclick="toggleAuth
 <button data-t="results" onclick="openTab('results')">🏆<small>Natija</small></button>
 <button class="admin-only hidden" data-t="admin" onclick="openTab('admin')" style="color:#dc2626">👑<small>Admin</small></button>
 </nav>
-</div>
-<script src="https://jsdelivr.net"></script>
+</div><script>
+document.write('<scr' + 'ipt src="https://cdn.jsdelivr.' + 'net/npm/@supabase/supabase-js@2"></scr' + 'ipt>');
+</script>
 
 <script src="questions.js"></script>
 <script src="auth.js"></script>
