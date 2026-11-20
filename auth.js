@@ -1,26 +1,40 @@
 const SUPABASE_URL = "https://supabase.co";
-const SUPABASE_KEY = "sb_publishable_zpAfXMvyJgp8GEU3X7Jk1g_XRN2VS2V";
+const SUPABASE_KEY = "BU_YERGA_COPY_QILINGAN_KALITNI_QOYING";
+
+const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const ADMIN_LOGIN = "admin";
 const ADMIN_PASS = "admin123";
 
 async function sbFetch(table, method = "GET", body = null, query = "") {
-    const headers = {
-        "apikey": SUPABASE_KEY,
-        "Content-Type": "application/json",
-        "Prefer": "return=representation"
-    };
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}${query}`, {
-        method,
-        headers,
-        body: body ? JSON.stringify(body) : null
-    });
-    const data = await res.json();
-    if (!res.ok) {
-        console.error("Supabase xatosi:", data);
-        throw new Error(data.message || "Xatolik");
+    if (method === "POST") {
+        const { data, error } = await sb.from(table).insert([body]).select();
+        if (error) throw new Error(error.message);
+        return data;
     }
-    return data;
+    if (method === "GET") {
+        let q = sb.from(table).select("*");
+        if (query.includes("login=eq.")) {
+            const loginVal = query.split("login=eq.")[1].split("&")[0];
+            q = q.eq("login", loginVal);
+        }
+        if (query.includes("pass=eq.")) {
+            const passVal = query.split("pass=eq.")[1].split("&")[0];
+            q = q.eq("pass", passVal);
+        }
+        if (query.includes("order=id.desc")) {
+            q = q.order("id", { ascending: false });
+        }
+        const { data, error } = await q;
+        if (error) throw new Error(error.message);
+        return data;
+    }
+    if (method === "PATCH") {
+        const idVal = query.split("id=eq.")[1];
+        const { data, error } = await sb.from(table).update(body).eq("id", idVal);
+        if (error) throw new Error(error.message);
+        return data;
+    }
 }
 
 function checkAuthSession() {
@@ -146,6 +160,6 @@ async function loadAdminPanel() {
                 </tr>`).join("")
             : '<tr><td colspan="5" style="text-align:center">Hozircha test natijalari yo\'q</td></tr>';
     } catch (e) {
-        console.error(e);
+        alert("Admin xatosi: " + e.message);
     }
 }
