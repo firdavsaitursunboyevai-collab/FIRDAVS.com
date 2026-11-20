@@ -1,3 +1,5 @@
+var MY_TELEGRAM_USERNAME = "SIZNING_TELEGRAM_USERNAMINGIZ";
+
 const engData=[
 {t:"Grammar • 1",h:"To Be fe'li",d:"Hozirgi zamon shakllari (am, is, are).",f:"I am | He/She/It is | We/You/They are",full:"Ingliz tilida 'to be' fe'li gapda asosiy fe'l bo'lmaganda ishlatiladi. I bilan 'am', birlikda 'is', ko'plikda 'are' keladi.",ex:["I am a student. — Men o'quvchiman.","She is very smart. — U juda aqlli.","They are ready. — Ular tayyor."]},
 {t:"Tenses • 2",h:"Present Simple & Continuous",d:"Doimiy va hozirgi davomiy zamon.",f:"V1(s/es)  |  am/is/are + V-ing",full:"Present Simple har kuni takrorlanadigan odatlar uchun, Present Continuous esa ayni damda sodir bo'layotgan harakatlar uchun ishlatiladi.",ex:["He works every day. — U har kuni ishlaydi.","Look! It is raining now. — Qarang! Hozir yomg'ir yog'yapti."]},
@@ -25,100 +27,177 @@ const mathData=[
 ];
 let curQ=[];
 
+function buyPlusModal() {
+    const curUser = JSON.parse(localStorage.getItem("edu_current_user") || '{"name":"O\'quvchi","login":"guest"}');
+    const text = encodeURIComponent(`Assalomu alaykum! Men EduMaster PRO saytida 💎 PLUS tarifini sotib olmoqchiman.\n👤 Ismim: ${curUser.name}\n🔑 Loginim: ${curUser.login}`);
+    window.open(`https://t.me{MY_TELEGRAM_USERNAME}?text=${text}`, "_blank");
+}
+
 function openTab(id){
-document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
-document.getElementById(id).classList.add('active');
-document.querySelectorAll('[data-t]').forEach(b=>b.classList.toggle('active',b.getAttribute('data-t')===id));
-if(id==='results'||id==='home')loadStats();
-if(id==='admin')loadAdminPanel();
-window.scrollTo(0,0);
+    document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelectorAll('[data-t]').forEach(b=>b.classList.toggle('active',b.getAttribute('data-t')===id));
+    if(id==='results'||id==='home')loadStats();
+    if(id==='admin')loadAdminPanel();
+    if(id==='plus')loadLeaderboard();
+    window.scrollTo(0,0);
 }
 
 function render(){
-document.getElementById('list-eng').innerHTML=engData.map((x,idx)=>`<div class="card item" data-s="${(x.h+x.d+x.f).toLowerCase()}"><div><span class="tag">${x.t}</span><h3>${x.h}</h3><p style="color:#475569;font-size:14px">${x.d}</p><div class="formula">${x.f}</div></div><button class="btn btn-outline" onclick="openLesson('english',${idx})">📖 Mavzuga kirish →</button></div>`).join('');
-document.getElementById('list-math').innerHTML=mathData.map((x,idx)=>`<div class="card item" data-s="${(x.h+x.d+x.f).toLowerCase()}"><div><span class="tag">${x.t}</span><h3>${x.h}</h3><p style="color:#475569;font-size:14px">${x.d}</p><div class="formula">${x.f}</div></div><button class="btn btn-outline" onclick="openLesson('math',${idx})">📖 Mavzuga kirish →</button></div>`).join('');
+    document.getElementById('list-eng').innerHTML=engData.map((x,idx)=>`<div class="card item" data-s="${(x.h+x.d+x.f).toLowerCase()}"><div><span class="tag">${x.t}</span><h3>${x.h}</h3><p style="color:#475569;font-size:14px">${x.d}</p><div class="formula">${x.f}</div></div><button class="btn btn-outline" onclick="openLesson('english',${idx})">📖 Mavzuga kirish →</button></div>`).join('');
+    document.getElementById('list-math').innerHTML=mathData.map((x,idx)=>`<div class="card item" data-s="${(x.h+x.d+x.f).toLowerCase()}"><div><span class="tag">${x.t}</span><h3>${x.h}</h3><p style="color:#475569;font-size:14px">${x.d}</p><div class="formula">${x.f}</div></div><button class="btn btn-outline" onclick="openLesson('math',${idx})">📖 Mavzuga kirish →</button></div>`).join('');
 }
 
 function openLesson(type,idx){
-const data=type==='english'?engData[idx]:mathData[idx];
-const backTab=type==='english'?'english':'math';
-document.getElementById('lesson-detail-content').innerHTML=`<button class="btn btn-gray" style="margin-bottom:16px" onclick="openTab('${backTab}')">← Ortga qaytish</button><div class="lesson-view"><span class="tag">${data.t}</span><h1 style="font-size:24px;margin-bottom:12px">${data.h}</h1><p style="font-size:16px;color:#334155;margin-bottom:16px">${data.full}</p><div class="formula" style="font-size:15px;padding:14px;margin-bottom:20px">${data.f}</div>${data.ex.map(e=>`<div class="example-box"><b>•</b> ${e}</div>`).join('')}<button class="btn btn-primary" style="margin-top:20px" onclick="openTab('quiz');document.getElementById('q-cat').value='${type}';startQuiz()">⚡ Shu fandan test ishlash</button></div>`;
-openTab('lesson-detail');
+    const data=type==='english'?engData[idx]:mathData[idx];
+    const backTab=type==='english'?'english':'math';
+    document.getElementById('lesson-detail-content').innerHTML=`<button class="btn btn-gray" style="margin-bottom:16px" onclick="openTab('${backTab}')">← Ortga qaytish</button><div class="lesson-view"><span class="tag">${data.t}</span><h1 style="font-size:24px;margin-bottom:12px">${data.h}</h1><p style="font-size:16px;color:#334155;margin-bottom:16px">${data.full}</p><div class="formula" style="font-size:15px;padding:14px;margin-bottom:20px">${data.f}</div>${data.ex.map(e=>`<div class="example-box"><b>•</b> ${e}</div>`).join('')}<button class="btn btn-primary" style="margin-top:20px" onclick="openTab('quiz');document.getElementById('q-cat').value='${type}';startQuiz()">⚡ Shu fandan test ishlash</button></div>`;
+    openTab('lesson-detail');
 }
 
 function filter(type){
-const v=document.getElementById('s-'+type).value.toLowerCase();
-document.querySelectorAll('#list-'+type+' .item').forEach(c=>c.style.display=c.getAttribute('data-s').includes(v)?'block':'none');
+    const v=document.getElementById('s-'+type).value.toLowerCase();
+    document.querySelectorAll('#list-'+type+' .item').forEach(c=>c.style.display=c.getAttribute('data-s').includes(v)?'block':'none');
 }
 
 function shuffle(arr){
-let a=[...arr];
-for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
-return a;
+    let a=[...arr];
+    for(let i=a.length-1;i>0;i--){let j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+    return a;
 }
 
 function startQuiz(){
-const cat=document.getElementById('q-cat').value;
-const num=parseInt(document.getElementById('q-num').value);
-let pool=cat==='all'?qBank:qBank.filter(x=>x.c===cat);
-curQ=shuffle(pool).slice(0,Math.min(num,pool.length)).map(q=>{
-let correct=q.o[q.a];
-let opts=shuffle(q.o);
-return{q:q.q,c:q.c,opts:opts,ans:opts.indexOf(correct)};
-});
-document.getElementById('q-setup').classList.add('hidden');
-document.getElementById('q-res').classList.add('hidden');
-document.getElementById('q-box').classList.remove('hidden');
-document.getElementById('q-items').innerHTML=curQ.map((item,i)=>`<div class="card" style="margin-bottom:14px"><span class="tag">${item.c==='english'?'🇬🇧 English':'📐 Math'} • ${i+1}-savol</span><h4>${item.q}</h4>${item.opts.map((o,oi)=>`<label class="opt"><input type="radio" name="q${i}" value="${oi}"> ${o}</label>`).join('')}</div>`).join('');
+    const curUser = JSON.parse(localStorage.getItem("edu_current_user") || '{}');
+    const cat = document.getElementById('q-cat').value;
+    const num = parseInt(document.getElementById('q-num').value);
+
+    if (num >= 50 && !curUser.isPlus) {
+        if (confirm("🔒 50 va 100 talik katta imtihon testlari faqat 💎 PLUS tarifida ochiq!\n\nPLUS olish uchun Telegramga o'tasizmi?")) {
+            buyPlusModal();
+        }
+        return;
+    }
+
+    let pool=cat==='all'?qBank:qBank.filter(x=>x.c===cat);
+    curQ=shuffle(pool).slice(0,Math.min(num,pool.length)).map(q=>{
+        let correct=q.o[q.a];
+        let opts=shuffle(q.o);
+        return{q:q.q,c:q.c,opts:opts,ans:opts.indexOf(correct)};
+    });
+    document.getElementById('q-setup').classList.add('hidden');
+    document.getElementById('q-res').classList.add('hidden');
+    document.getElementById('q-box').classList.remove('hidden');
+    document.getElementById('q-items').innerHTML=curQ.map((item,i)=>`<div class="card" style="margin-bottom:14px"><span class="tag">${item.c==='english'?'🇬🇧 English':'📐 Math'} • ${i+1}-savol</span><h4>${item.q}</h4>${item.opts.map((o,oi)=>`<label class="opt"><input type="radio" name="q${i}" value="${oi}"> ${o}</label>`).join('')}</div>`).join('');
 }
 
 function cancelQuiz(){
-document.getElementById('q-box').classList.add('hidden');
-document.getElementById('q-setup').classList.remove('hidden');
+    document.getElementById('q-box').classList.add('hidden');
+    document.getElementById('q-setup').classList.remove('hidden');
 }
 
 async function finishQuiz(){
-let score=0,review='';
-curQ.forEach((item,i)=>{
-let sel=document.querySelector(`input[name="q${i}"]:checked`);
-let val=sel?parseInt(sel.value):-1;
-let ok=val===item.ans;
-if(ok)score++;
-review+=`<div class="card" style="margin-bottom:10px;border-left:5px solid ${ok?'#10b981':'#ef4444'}"><b>${i+1}. ${item.q}</b><p style="font-size:14px;margin-top:4px">Sizning javob: <b>${val>-1?item.opts[val]:'Belgilanmagan'}</b> ${ok?'✅':'❌'}</p>${!ok?`<p style="color:#10b981;font-size:14px">To'g'ri javob: <b>${item.opts[item.ans]}</b></p>`:''}</div>`;
-});
-let pct=Math.round((score/curQ.length)*100);
-let catSelect=document.getElementById('q-cat');
-let catName=catSelect.options[catSelect.selectedIndex].text;
-const curUser=JSON.parse(localStorage.getItem("edu_current_user")||'{"name":"O\'quvchi","login":"guest"}');
+    let score=0,review='';
+    curQ.forEach((item,i)=>{
+        let sel=document.querySelector(`input[name="q${i}"]:checked`);
+        let val=sel?parseInt(sel.value):-1;
+        let ok=val===item.ans;
+        if(ok)score++;
+        review+=`<div class="card" style="margin-bottom:10px;border-left:5px solid ${ok?'#10b981':'#ef4444'}"><b>${i+1}. ${item.q}</b><p style="font-size:14px;margin-top:4px">Sizning javob: <b>${val>-1?item.opts[val]:'Belgilanmagan'}</b> ${ok?'✅':'❌'}</p>${!ok?`<p style="color:#10b981;font-size:14px">To'g'ri javob: <b>${item.opts[item.ans]}</b></p>`:''}</div>`;
+    });
+    let pct=Math.round((score/curQ.length)*100);
+    let catSelect=document.getElementById('q-cat');
+    let catName=catSelect.options[catSelect.selectedIndex].text;
+    const curUser=JSON.parse(localStorage.getItem("edu_current_user")||'{"name":"O\'quvchi","login":"guest"}');
 
-const record={name:curUser.name,login:curUser.login,cat:catName,score:`${score}/${curQ.length}`,pct:pct,date:new Date().toLocaleString("uz-UZ",{dateStyle:"short",timeStyle:"short"})};
-try {
-    await sbFetch("results", "POST", record);
-} catch (e) {
-    alert("Baza xatosi: " + e.message);
-}
+    const record={name:curUser.name,login:curUser.login,cat:catName,score:`${score}/${curQ.length}`,pct:pct,correct_count:score,date:new Date().toLocaleString("uz-UZ",{dateStyle:"short",timeStyle:"short"})};
+    try{await sbFetch("results","POST",record);}catch(e){alert("Baza xatosi: "+e.message);}
 
+    document.getElementById('q-box').classList.add('hidden');
+    const resDiv=document.getElementById('q-res');
+    resDiv.classList.remove('hidden');
 
-document.getElementById('q-box').classList.add('hidden');
-const resDiv=document.getElementById('q-res');
-resDiv.classList.remove('hidden');
-resDiv.innerHTML=`<div class="card" style="text-align:center;margin-bottom:18px"><h2>🎉 Natija: ${score} / ${curQ.length} (${pct}%)</h2><p style="color:#64748b;margin:8px 0 16px">Natijangiz saqlandi!</p><button class="btn btn-primary" onclick="cancelQuiz();resDiv.classList.add('hidden')">🔄 Yana test ishlash</button><button class="btn btn-green" onclick="openTab('results')">🏆 Natijalar jadvali</button></div>${review}`;
-loadStats();
-window.scrollTo(0,0);
+    const certBtn = (curUser.isPlus && pct >= 80)
+        ? `<button class="btn" style="background:#f59e0b;color:#fff" onclick="downloadCert('${curUser.name}', '${catName}', ${pct})">🎓 Sertifikatni yuklash</button>`
+        : '';
+
+    resDiv.innerHTML=`<div class="card" style="text-align:center;margin-bottom:18px"><h2>🎉 Natija: ${score} / ${curQ.length} (${pct}%)</h2><p style="color:#64748b;margin:8px 0 16px">Natijangiz saqlandi!</p><div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap"><button class="btn btn-primary" onclick="cancelQuiz();resDiv.classList.add('hidden')">🔄 Yana test ishlash</button><button class="btn btn-green" onclick="openTab('plus')">🌍 Reytingni ko'rish</button>${certBtn}</div></div>${review}`;
+    loadStats();
+    window.scrollTo(0,0);
 }
 
 async function loadStats(){
-const curUser=JSON.parse(localStorage.getItem("edu_current_user")||'null');
-if(!curUser)return;
-let list=[];
-try{
-const myRes=await sbFetch("results","GET",null,`?login=eq.${curUser.login}&order=id.desc`);
-if(Array.isArray(myRes))list=myRes;
-}catch(e){}
-document.getElementById('st-count').innerText=list.length;
-document.getElementById('st-avg').innerText=list.length?Math.round(list.reduce((a,b)=>a+b.pct,0)/list.length)+'%':'0%';
-document.getElementById('res-body').innerHTML=list.length?list.map(x=>`<tr><td><b>${x.name}</b></td><td>${x.cat}</td><td><b>${x.score}</b></td><td><b>${x.pct}%</b></td><td>${x.date}</td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center">Hozircha natijalaringiz yo\'q</td></tr>';
+    const curUser=JSON.parse(localStorage.getItem("edu_current_user")||'null');
+    if(!curUser)return;
+    let list=[];
+    try{
+        const myRes=await sbFetch("results","GET",null,`?login=eq.${curUser.login}&order=id.desc`);
+        if(Array.isArray(myRes))list=myRes;
+    }catch(e){}
+    document.getElementById('st-count').innerText=list.length;
+    document.getElementById('st-avg').innerText=list.length?Math.round(list.reduce((a,b)=>a+b.pct,0)/list.length)+'%':'0%';
+    document.getElementById('res-body').innerHTML=list.length?list.map(x=>`<tr><td><b>${x.name}</b></td><td>${x.cat}</td><td><b>${x.score}</b></td><td><b>${x.pct}%</b></td><td>${x.date}</td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center">Hozircha natijalaringiz yo\'q</td></tr>';
 }
 
+async function loadLeaderboard() {
+    const curUser = JSON.parse(localStorage.getItem("edu_current_user") || '{}');
+    const buyBtn = document.getElementById("buy-plus-btn");
+    if (curUser.isPlus && buyBtn) {
+        buyBtn.innerText = "✅ Sizda PLUS tarifi faol!";
+        buyBtn.style.background = "#10b981";
+    }
+
+    if (!curUser.isPlus) {
+        document.getElementById("leaderboard-locked").classList.remove("hidden");
+        document.getElementById("leaderboard-open").classList.add("hidden");
+        return;
+    }
+
+    document.getElementById("leaderboard-locked").classList.add("hidden");
+    document.getElementById("leaderboard-open").classList.remove("hidden");
+
+    const allRes = await sbFetch("results", "GET", null, "?order=id.desc");
+    const users = await sbFetch("users", "GET", null, "");
+    const plusMap = {};
+    if (Array.isArray(users)) users.forEach(u => plusMap[u.login] = u.is_plus);
+
+    const stats = {};
+    allRes.forEach(r => {
+        if (!stats[r.login]) stats[r.login] = { name: r.name, login: r.login, totalCorrect: 0, tests: 0, pctSum: 0 };
+        const corr = r.correct_count || parseInt((r.score || "0").split("/")[0]) || 0;
+        stats[r.login].totalCorrect += corr;
+        stats[r.login].tests += 1;
+        stats[r.login].pctSum += r.pct;
+    });
+
+    const sorted = Object.values(stats).sort((a, b) => b.totalCorrect - a.totalCorrect);
+    const medals = ["🥇 1-o'rin", "🥈 2-o'rin", "🥉 3-o'rin"];
+
+    document.getElementById("leaderboard-body").innerHTML = sorted.length
+        ? sorted.map((s, idx) => `
+            <tr style="${s.login === curUser.login ? 'background:#fefce8;' : ''}">
+                <td><b>${medals[idx] || (idx + 1) + "-o'rin"}</b></td>
+                <td><b>${s.name}</b> ${plusMap[s.login] ? '💎' : ''}</td>
+                <td><b style="color:#4f46e5;font-size:16px">${s.totalCorrect} ta</b></td>
+                <td>${s.tests} ta test</td>
+                <td><b>${Math.round(s.pctSum / s.tests)}%</b></td>
+            </tr>`).join("")
+        : '<tr><td colspan="5" style="text-align:center">Hali natijalar yo\'q</td></tr>';
+}
+
+function downloadCert(name, subject, pct) {
+    const w = window.open("", "_blank");
+    w.document.write(`
+        <div style="border:12px double #4f46e5;padding:50px;text-align:center;font-family:sans-serif;max-width:750px;margin:30px auto;background:#fffbeb">
+            <h1 style="color:#4f46e5;font-size:36px;margin-bottom:10px">🎓 SERTIFIKAT</h1>
+            <p style="color:#64748b;font-size:16px">EduMaster PRO Xalqaro Ta'lim Platformasi</p>
+            <hr style="margin:25px 0;border:1px solid #e2e8f0">
+Ushbu sertifikat egasi:
+${name}
+${subject} yo'nalishi bo'yicha imtihondan ${pct}% natija ko'rsatib, muvaffaqiyatli tamomladi.
+Sana: ${new Date().toLocaleDateString("uz-UZ")} • Tasdiqlangan: 💎 EduMaster PRO
+🖨️ Chop etish / PDF saqlash
+
+`);
+}
 render();
 checkAuthSession();

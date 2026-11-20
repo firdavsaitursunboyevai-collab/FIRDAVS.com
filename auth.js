@@ -1,5 +1,5 @@
 var SUPABASE_URL = "https://" + "hpvxopflazxzfftlheim" + ".supabase.co";
-var SUPABASE_KEY = "sb_publishable_zpAfXMvyJgp8GEU3X7Jk1g_XRN2VS2V";
+var SUPABASE_KEY = "sb_publishable_zpAFXMvyJgp8GEU3X7Jk1g_XRN2VS2V";
 
 var ADMIN_LOGIN = "admin";
 var ADMIN_PASS = "admin123";
@@ -36,13 +36,27 @@ async function sbFetch(table, method = "GET", body = null, query = "") {
     }
 }
 
-
-function checkAuthSession() {
-    const currentUser = JSON.parse(localStorage.getItem("edu_current_user") || "null");
+async function checkAuthSession() {
+    let currentUser = JSON.parse(localStorage.getItem("edu_current_user") || "null");
     if (currentUser) {
+        // Bazadan foydalanuvchining PLUS holatini yangilab olish
+        if (!currentUser.isAdmin) {
+            try {
+                const fresh = await sbFetch("users", "GET", null, `?login=eq.${currentUser.login}`);
+                if (fresh && fresh.length > 0) {
+                    currentUser.isPlus = !!fresh[0].is_plus;
+                    localStorage.setItem("edu_current_user", JSON.stringify(currentUser));
+                }
+            } catch (e) {}
+        } else {
+            currentUser.isPlus = true;
+        }
+
         document.getElementById("auth-screen").classList.add("hidden");
         document.getElementById("app-screen").classList.remove("hidden");
-        document.getElementById("uname").innerText = currentUser.name + (currentUser.isAdmin ? " (Admin)" : "");
+
+        const plusBadge = currentUser.isPlus ? ' <span style="background:#f59e0b;color:#fff;padding:2px 6px;border-radius:6px;font-size:10px">💎 PLUS</span>' : '';
+        document.getElementById("uname").innerHTML = currentUser.name + (currentUser.isAdmin ? " (Admin)" : "") + plusBadge;
 
         document.querySelectorAll(".admin-only").forEach(el => {
             el.classList.toggle("hidden", !currentUser.isAdmin);
@@ -77,7 +91,7 @@ async function handleAuth(e) {
     if (!login || !pass) return alert("Login va parolni kiriting!");
 
     if (!isRegisterMode && login === ADMIN_LOGIN && pass === ADMIN_PASS) {
-        localStorage.setItem("edu_current_user", JSON.stringify({ name: "Administrator", login: "admin", isAdmin: true }));
+        localStorage.setItem("edu_current_user", JSON.stringify({ name: "Administrator", login: "admin", isAdmin: true, isPlus: true }));
         checkAuthSession();
         return;
     }
@@ -89,29 +103,26 @@ async function handleAuth(e) {
         if (isRegisterMode) {
             if (!name) { btn.disabled = false; btn.innerText = "Ro'yxatdan o'tish"; return alert("Ismingizni kiriting!"); }
             const existing = await sbFetch("users", "GET", null, `?login=eq.${login}`);
-            if (login === ADMIN_LOGIN || (Array.isArray(existing) && existing.length > 0)) {
+            if (login === ADMIN_LOGIN || existing.length > 0) {
                 btn.disabled = false; btn.innerText = "Ro'yxatdan o'tish";
-                return alert("Bu login band! Boshqa login tanlang.");
+                return alert("Bu login band!");
             }
             const newUser = {
-                name: name,
-                login: login,
-                pass: pass,
-                visits: 1,
+                name: name, login: login, pass: pass, visits: 1, is_plus: false,
                 joined: new Date().toLocaleString("uz-UZ", { dateStyle: "short", timeStyle: "short" })
             };
             await sbFetch("users", "POST", newUser);
-            localStorage.setItem("edu_current_user", JSON.stringify({ name: newUser.name, login: newUser.login, isAdmin: false }));
+            localStorage.setItem("edu_current_user", JSON.stringify({ name: newUser.name, login: newUser.login, isAdmin: false, isPlus: false }));
             checkAuthSession();
         } else {
             const users = await sbFetch("users", "GET", null, `?login=eq.${login}&pass=eq.${pass}`);
-            if (!Array.isArray(users) || users.length === 0) {
+            if (!users || users.length === 0) {
                 btn.disabled = false; btn.innerText = "Kirish";
                 return alert("Login yoki parol noto'g'ri!");
             }
             const found = users[0];
             await sbFetch("users", "PATCH", { visits: (found.visits || 1) + 1 }, `?id=eq.${found.id}`);
-            localStorage.setItem("edu_current_user", JSON.stringify({ name: found.name, login: found.login, isAdmin: false }));
+            localStorage.setItem("edu_current_user", JSON.stringify({ name: found.name, login: found.login, isAdmin: false, isPlus: !!found.is_plus }));
             checkAuthSession();
         }
     } catch (err) {
@@ -128,38 +139,43 @@ function logoutUser() {
     }
 }
 
+// Admin orqali foydalanuvchiga PLUS berish yoki olish
+async function toggleUserPlus(userId, currentStatus) {
+    await sbFetch("users", "PATCH", { is_plus: !currentStatus }, `?id=eq.${userId}`);
+    loadAdminPanel();
+}
+
 async function loadAdminPanel() {
-    try {
-        const users = await sbFetch("users", "GET", null, "?order=id.desc");
-        const allResults = await sbFetch("results", "GET", null, "?order=id.desc");
+    const users = await sbFetch("users", "GET", null, "?order=id.desc");
+    const allResults = await sbFetch("results", "GET", null, "?order=id.desc");
 
-        document.getElementById("adm-total-users").innerText = users.length;
-        const totalVisits = users.reduce((sum, u) => sum + (u.visits || 1), 0);
-        document.getElementById("adm-total-visits").innerText = totalVisits;
-        document.getElementById("adm-total-tests").innerText = allResults.length;
+    document.getElementById("adm-total-users").innerText = users.length;
+    document.getElementById("adm-total-visits").innerText = users.reduce((sum, u) => sum + (u.visits || 1), 0);
+    document.getElementById("adm-total-tests").innerText = allResults.length;
 
-        document.getElementById("adm-users-body").innerHTML = users.length
-            ? users.map((u, i) => `
-                <tr>
-                    <td>${i + 1}</td>
-                    <td><b>${u.name}</b></td>
-                    <td><code>${u.login}</code></td>
-                    <td>${u.visits || 1} marta</td>
-                    <td>${u.joined}</td>
-                </tr>`).join("")
-            : '<tr><td colspan="5" style="text-align:center">Hozircha o\'quvchilar yo\'q</td></tr>';
+    document.getElementById("adm-users-body").innerHTML = users.length
+        ? users.map((u, i) => `
+            <tr>
+                <td>${i + 1}</td>
+                <td><b>${u.name}</b> ${u.is_plus ? '💎' : ''}</td>
+                <td><code>${u.login}</code></td>
+                <td>${u.visits || 1} marta</td>
+                <td>
+                    <button class="btn" style="padding:5px 10px;font-size:12px;background:${u.is_plus ? '#10b981' : '#e2e8f0'};color:${u.is_plus ? '#fff' : '#0f172a'}" onclick="toggleUserPlus(${u.id}, ${!!u.is_plus})">
+                        ${u.is_plus ? '💎 PLUS (Faol)' : '🆓 Tekin (PLUS berish)'}
+                    </button>
+                </td>
+            </tr>`).join("")
+        : '<tr><td colspan="5" style="text-align:center">O\'quvchilar yo\'q</td></tr>';
 
-        document.getElementById("adm-results-body").innerHTML = allResults.length
-            ? allResults.map(r => `
-                <tr>
-                    <td><b>${r.name}</b> <small style="color:#64748b">(@${r.login})</small></td>
-                    <td>${r.cat}</td>
-                    <td><b>${r.score}</b></td>
-                    <td><span style="color:${r.pct >= 70 ? '#10b981' : '#ef4444'};font-weight:700">${r.pct}%</span></td>
-                    <td>${r.date}</td>
-                </tr>`).join("")
-            : '<tr><td colspan="5" style="text-align:center">Hozircha test natijalari yo\'q</td></tr>';
-    } catch (e) {
-        alert("Admin xatosi: " + e.message);
-    }
+    document.getElementById("adm-results-body").innerHTML = allResults.length
+        ? allResults.map(r => `
+            <tr>
+                <td><b>${r.name}</b> <small>(@${r.login})</small></td>
+                <td>${r.cat}</td>
+                <td><b>${r.score}</b></td>
+                <td><b>${r.pct}%</b></td>
+                <td>${r.date}</td>
+            </tr>`).join("")
+        : '<tr><td colspan="5" style="text-align:center">Natijalar yo\'q</td></tr>';
 }
