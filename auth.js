@@ -7,7 +7,6 @@ const ADMIN_PASS = "admin123";
 async function sbFetch(table, method = "GET", body = null, query = "") {
     const headers = {
         "apikey": SUPABASE_KEY,
-        "Authorization": "Bearer " + SUPABASE_KEY,
         "Content-Type": "application/json",
         "Prefer": "return=representation"
     };
@@ -16,7 +15,12 @@ async function sbFetch(table, method = "GET", body = null, query = "") {
         headers,
         body: body ? JSON.stringify(body) : null
     });
-    return res.json();
+    const data = await res.json();
+    if (!res.ok) {
+        console.error("Supabase xatosi:", data);
+        throw new Error(data.message || "Xatolik");
+    }
+    return data;
 }
 
 function checkAuthSession() {
@@ -91,13 +95,13 @@ async function handleAuth(e) {
                 btn.disabled = false; btn.innerText = "Kirish";
                 return alert("Login yoki parol noto'g'ri!");
             }
-            const found = users;
+            const found = users[0];
             await sbFetch("users", "PATCH", { visits: (found.visits || 1) + 1 }, `?id=eq.${found.id}`);
             localStorage.setItem("edu_current_user", JSON.stringify({ name: found.name, login: found.login, isAdmin: false }));
             checkAuthSession();
         }
     } catch (err) {
-        alert("Serverga ulanishda xatolik yuz berdi!");
+        alert("Xatolik: " + err.message);
     }
     btn.disabled = false;
     btn.innerText = isRegisterMode ? "Ro'yxatdan o'tish" : "Kirish";
@@ -111,33 +115,37 @@ function logoutUser() {
 }
 
 async function loadAdminPanel() {
-    const users = await sbFetch("users", "GET", null, "?order=id.desc");
-    const allResults = await sbFetch("results", "GET", null, "?order=id.desc");
+    try {
+        const users = await sbFetch("users", "GET", null, "?order=id.desc");
+        const allResults = await sbFetch("results", "GET", null, "?order=id.desc");
 
-    document.getElementById("adm-total-users").innerText = Array.isArray(users) ? users.length : 0;
-    const totalVisits = Array.isArray(users) ? users.reduce((sum, u) => sum + (u.visits || 1), 0) : 0;
-    document.getElementById("adm-total-visits").innerText = totalVisits;
-    document.getElementById("adm-total-tests").innerText = Array.isArray(allResults) ? allResults.length : 0;
+        document.getElementById("adm-total-users").innerText = users.length;
+        const totalVisits = users.reduce((sum, u) => sum + (u.visits || 1), 0);
+        document.getElementById("adm-total-visits").innerText = totalVisits;
+        document.getElementById("adm-total-tests").innerText = allResults.length;
 
-    document.getElementById("adm-users-body").innerHTML = (Array.isArray(users) && users.length)
-        ? users.map((u, i) => `
-            <tr>
-                <td>${i + 1}</td>
-                <td><b>${u.name}</b></td>
-                <td><code>${u.login}</code></td>
-                <td>${u.visits || 1} marta</td>
-                <td>${u.joined}</td>
-            </tr>`).join("")
-        : '<tr><td colspan="5" style="text-align:center">Hozircha o\'quvchilar yo\'q</td></tr>';
+        document.getElementById("adm-users-body").innerHTML = users.length
+            ? users.map((u, i) => `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td><b>${u.name}</b></td>
+                    <td><code>${u.login}</code></td>
+                    <td>${u.visits || 1} marta</td>
+                    <td>${u.joined}</td>
+                </tr>`).join("")
+            : '<tr><td colspan="5" style="text-align:center">Hozircha o\'quvchilar yo\'q</td></tr>';
 
-    document.getElementById("adm-results-body").innerHTML = (Array.isArray(allResults) && allResults.length)
-        ? allResults.map(r => `
-            <tr>
-                <td><b>${r.name}</b> <small style="color:#64748b">(@${r.login})</small></td>
-                <td>${r.cat}</td>
-                <td><b>${r.score}</b></td>
-                <td><span style="color:${r.pct >= 70 ? '#10b981' : '#ef4444'};font-weight:700">${r.pct}%</span></td>
-                <td>${r.date}</td>
-            </tr>`).join("")
-        : '<tr><td colspan="5" style="text-align:center">Hozircha test natijalari yo\'q</td></tr>';
+        document.getElementById("adm-results-body").innerHTML = allResults.length
+            ? allResults.map(r => `
+                <tr>
+                    <td><b>${r.name}</b> <small style="color:#64748b">(@${r.login})</small></td>
+                    <td>${r.cat}</td>
+                    <td><b>${r.score}</b></td>
+                    <td><span style="color:${r.pct >= 70 ? '#10b981' : '#ef4444'};font-weight:700">${r.pct}%</span></td>
+                    <td>${r.date}</td>
+                </tr>`).join("")
+            : '<tr><td colspan="5" style="text-align:center">Hozircha test natijalari yo\'q</td></tr>';
+    } catch (e) {
+        console.error(e);
+    }
 }
