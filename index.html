@@ -433,10 +433,16 @@
                     <button class="admin-only hidden" data-t="admin" onclick="openTab('admin')" style="color:#dc2626">👑
                         Admin</button>
                 </div>
-                <div class="user-btn" onclick="logoutUser()" title="Chiqish">
-                    <span>👤 <span id="uname">O'quvchi</span></span>
-                    <span style="color:#ef4444;font-size:11px">[Chiqish]</span>
-                </div>
+                <div style="display:flex;align-items:center;gap:8px">
+    <button id="top-plus-btn" class="btn" onclick="buyPlusModal()" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:6px 12px;font-size:12px;border-radius:20px">
+        💎 PLUS olish
+    </button>
+    <div class="user-btn" onclick="logoutUser()" title="Chiqish">
+        <span>👤 <span id="uname">O'quvchi</span></span>
+        <span style="color:#ef4444;font-size:11px">[Chiqish]</span>
+    </div>
+</div>
+
             </div>
         </header>
 

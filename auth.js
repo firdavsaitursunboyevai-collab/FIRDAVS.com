@@ -73,6 +73,8 @@ async function checkAuthSession() {
 
         const plusBadge = currentUser.isPlus ? ' <span style="background:#f59e0b;color:#fff;padding:2px 6px;border-radius:6px;font-size:10px">💎 PLUS</span>' : '';
         document.getElementById("uname").innerHTML = currentUser.name + (currentUser.isAdmin ? " (Admin)" : "") + plusBadge;
+const topPlusBtn = document.getElementById("top-plus-btn");
+if (topPlusBtn) topPlusBtn.classList.toggle("hidden", currentUser.isPlus || currentUser.isAdmin);
 
         document.querySelectorAll(".admin-only").forEach(el => {
             el.classList.toggle("hidden", !currentUser.isAdmin);
