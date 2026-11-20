@@ -1,5 +1,5 @@
 var SUPABASE_URL = "https://" + "hpvxopflazxzfftlheim" + ".supabase.co";
-var SUPABASE_KEY = "sb_publishable_zpAFXMvyJgp8GEU3X7Jk1g_XRN2VS2V";
+var SUPABASE_KEY = "sb_publishable_zpAfXMvyJgp8GEU3X7Jk1g_XRN2VS2V";
 
 var ADMIN_LOGIN = "admin";
 var ADMIN_PASS = "admin123";
