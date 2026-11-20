@@ -1,4 +1,4 @@
-var MY_TELEGRAM_USERNAME = "@Fss_rikxxxxxxxxxxxxxxxxxxxxxxxxx";
+var MY_TELEGRAM_USERNAME = "Fss_rikxxxxxxxxxxxxxxxxxxxxxxxxx";
 
 const engData=[
 {t:"Grammar • 1",h:"To Be fe'li",d:"Hozirgi zamon shakllari (am, is, are).",f:"I am | He/She/It is | We/You/They are",full:"Ingliz tilida 'to be' fe'li gapda asosiy fe'l bo'lmaganda ishlatiladi. I bilan 'am', birlikda 'is', ko'plikda 'are' keladi.",ex:["I am a student. — Men o'quvchiman.","She is very smart. — U juda aqlli.","They are ready. — Ular tayyor."]},
@@ -30,7 +30,7 @@ let curQ=[];
 function buyPlusModal() {
     const curUser = JSON.parse(localStorage.getItem("edu_current_user") || '{"name":"O\'quvchi","login":"guest"}');
     const text = encodeURIComponent(`Assalomu alaykum! Men EduMaster PRO saytida 💎 PLUS tarifini sotib olmoqchiman.\n👤 Ismim: ${curUser.name}\n🔑 Loginim: ${curUser.login}`);
-    window.open(`https://t.me{@Fss_rikxxxxxxxxxxxxxxxxxxxxxxxxx}?text=${text}`, "_blank");
+    window.open(`https://t.me{MY_TELEGRAM_USERNAME}?text=${text}`, "_blank");
 }
 
 function openTab(id){
