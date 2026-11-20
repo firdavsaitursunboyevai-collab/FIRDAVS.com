@@ -92,7 +92,12 @@ let catName=catSelect.options[catSelect.selectedIndex].text;
 const curUser=JSON.parse(localStorage.getItem("edu_current_user")||'{"name":"O\'quvchi","login":"guest"}');
 
 const record={name:curUser.name,login:curUser.login,cat:catName,score:`${score}/${curQ.length}`,pct:pct,date:new Date().toLocaleString("uz-UZ",{dateStyle:"short",timeStyle:"short"})};
-try{await sbFetch("results","POST",record);}catch(e){}
+try {
+    await sbFetch("results", "POST", record);
+} catch (e) {
+    alert("Baza xatosi: " + e.message);
+}
+
 
 document.getElementById('q-box').classList.add('hidden');
 const resDiv=document.getElementById('q-res');
