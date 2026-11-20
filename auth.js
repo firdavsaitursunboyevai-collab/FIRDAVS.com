@@ -36,11 +36,27 @@ async function sbFetch(table, method = "GET", body = null, query = "") {
     }
 }
 
+// 🟢 Har 25 soniyada foydalanuvchi saytda ONLAYN ekanligini bazaga yozib turish
+let onlineHeartbeat = null;
+function startOnlineTracker(login) {
+    if (onlineHeartbeat) clearInterval(onlineHeartbeat);
+    const ping = async () => {
+        try {
+            const users = await sbFetch("users", "GET", null, `?login=eq.${login}`);
+            if (users && users.length > 0) {
+                await sbFetch("users", "PATCH", { last_seen: Date.now() }, `?id=eq.${users[0].id}`);
+            }
+        } catch (e) {}
+    };
+    ping();
+    onlineHeartbeat = setInterval(ping, 25000);
+}
+
 async function checkAuthSession() {
     let currentUser = JSON.parse(localStorage.getItem("edu_current_user") || "null");
     if (currentUser) {
-        // Bazadan foydalanuvchining PLUS holatini yangilab olish
         if (!currentUser.isAdmin) {
+            startOnlineTracker(currentUser.login);
             try {
                 const fresh = await sbFetch("users", "GET", null, `?login=eq.${currentUser.login}`);
                 if (fresh && fresh.length > 0) {
@@ -108,7 +124,7 @@ async function handleAuth(e) {
                 return alert("Bu login band!");
             }
             const newUser = {
-                name: name, login: login, pass: pass, visits: 1, is_plus: false,
+                name: name, login: login, pass: pass, visits: 1, is_plus: false, last_seen: Date.now(),
                 joined: new Date().toLocaleString("uz-UZ", { dateStyle: "short", timeStyle: "short" })
             };
             await sbFetch("users", "POST", newUser);
@@ -121,7 +137,7 @@ async function handleAuth(e) {
                 return alert("Login yoki parol noto'g'ri!");
             }
             const found = users[0];
-            await sbFetch("users", "PATCH", { visits: (found.visits || 1) + 1 }, `?id=eq.${found.id}`);
+            await sbFetch("users", "PATCH", { visits: (found.visits || 1) + 1, last_seen: Date.now() }, `?id=eq.${found.id}`);
             localStorage.setItem("edu_current_user", JSON.stringify({ name: found.name, login: found.login, isAdmin: false, isPlus: !!found.is_plus }));
             checkAuthSession();
         }
@@ -134,48 +150,67 @@ async function handleAuth(e) {
 
 function logoutUser() {
     if (confirm("Akkauntdan chiqmoqchimisiz?")) {
+        if (onlineHeartbeat) clearInterval(onlineHeartbeat);
         localStorage.removeItem("edu_current_user");
         checkAuthSession();
     }
 }
 
-// Admin orqali foydalanuvchiga PLUS berish yoki olish
 async function toggleUserPlus(userId, currentStatus) {
     await sbFetch("users", "PATCH", { is_plus: !currentStatus }, `?id=eq.${userId}`);
     loadAdminPanel();
 }
 
+// 👑 ADMIN PANEL: BARCHA OLDIN KIRGANLAR + ONLAYN ODAMLAR + TEST NATIJALARI
 async function loadAdminPanel() {
-    const users = await sbFetch("users", "GET", null, "?order=id.desc");
-    const allResults = await sbFetch("results", "GET", null, "?order=id.desc");
+    try {
+        const users = await sbFetch("users", "GET", null, "?order=id.desc");
+        const allResults = await sbFetch("results", "GET", null, "?order=id.desc");
+        const now = Date.now();
 
-    document.getElementById("adm-total-users").innerText = users.length;
-    document.getElementById("adm-total-visits").innerText = users.reduce((sum, u) => sum + (u.visits || 1), 0);
-    document.getElementById("adm-total-tests").innerText = allResults.length;
+        // Oxirgi 60 soniya ichida faol bo'lganlarni ONLAYN deb hisoblash
+        let onlineCount = 0;
+        users.forEach(u => {
+            if (u.last_seen && (now - u.last_seen) < 60000) onlineCount++;
+        });
 
-    document.getElementById("adm-users-body").innerHTML = users.length
-        ? users.map((u, i) => `
-            <tr>
-                <td>${i + 1}</td>
-                <td><b>${u.name}</b> ${u.is_plus ? '💎' : ''}</td>
-                <td><code>${u.login}</code></td>
-                <td>${u.visits || 1} marta</td>
-                <td>
-                    <button class="btn" style="padding:5px 10px;font-size:12px;background:${u.is_plus ? '#10b981' : '#e2e8f0'};color:${u.is_plus ? '#fff' : '#0f172a'}" onclick="toggleUserPlus(${u.id}, ${!!u.is_plus})">
-                        ${u.is_plus ? '💎 PLUS (Faol)' : '🆓 Tekin (PLUS berish)'}
-                    </button>
-                </td>
-            </tr>`).join("")
-        : '<tr><td colspan="5" style="text-align:center">O\'quvchilar yo\'q</td></tr>';
+        document.getElementById("adm-total-users").innerText = users.length;
+        document.getElementById("adm-total-visits").innerHTML = `${onlineCount} <small style="font-size:14px;color:#10b981">🟢 Onlayn</small>`;
+        document.getElementById("adm-total-tests").innerText = allResults.length;
 
-    document.getElementById("adm-results-body").innerHTML = allResults.length
-        ? allResults.map(r => `
-            <tr>
-                <td><b>${r.name}</b> <small>(@${r.login})</small></td>
-                <td>${r.cat}</td>
-                <td><b>${r.score}</b></td>
-                <td><b>${r.pct}%</b></td>
-                <td>${r.date}</td>
-            </tr>`).join("")
-        : '<tr><td colspan="5" style="text-align:center">Natijalar yo\'q</td></tr>';
+        document.getElementById("adm-users-body").innerHTML = users.length
+            ? users.map((u, i) => {
+                const isOnline = u.last_seen && (now - u.last_seen) < 60000;
+                const statusBadge = isOnline
+                    ? '<span style="background:#dcfce7;color:#15803d;padding:3px 8px;border-radius:12px;font-size:11px;font-weight:700">🟢 Onlayn</span>'
+                    : `<span style="color:#64748b;font-size:12px">⚪ Oflayn (${u.joined || ''})</span>`;
+
+                return `
+                <tr>
+                    <td>${i + 1}</td>
+                    <td><b>${u.name}</b> ${u.is_plus ? '💎' : ''}<br>${statusBadge}</td>
+                    <td><code>${u.login}</code></td>
+                    <td>${u.visits || 1} marta</td>
+                    <td>
+                        <button class="btn" style="padding:6px 10px;font-size:12px;background:${u.is_plus ? '#10b981' : '#e2e8f0'};color:${u.is_plus ? '#fff' : '#0f172a'}" onclick="toggleUserPlus(${u.id}, ${!!u.is_plus})">
+                            ${u.is_plus ? '💎 PLUS (Faol)' : '🆓 PLUS berish'}
+                        </button>
+                    </td>
+                </tr>`;
+            }).join("")
+            : '<tr><td colspan="5" style="text-align:center">Hozircha ro\'yxatdan o\'tgan o\'quvchilar yo\'q</td></tr>';
+
+        document.getElementById("adm-results-body").innerHTML = allResults.length
+            ? allResults.map(r => `
+                <tr>
+                    <td><b>${r.name}</b> <small>(@${r.login})</small></td>
+                    <td>${r.cat}</td>
+                    <td><b>${r.score}</b></td>
+                    <td><span style="color:${r.pct >= 70 ? '#10b981' : '#ef4444'};font-weight:700">${r.pct}%</span></td>
+                    <td>${r.date}</td>
+                </tr>`).join("")
+            : '<tr><td colspan="5" style="text-align:center">Hozircha test natijalari yo\'q</td></tr>';
+    } catch (e) {
+        alert("Admin yuklash xatosi: " + e.message);
+    }
 }

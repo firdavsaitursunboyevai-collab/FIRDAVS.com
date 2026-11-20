@@ -1,4 +1,4 @@
-var MY_TELEGRAM_USERNAME = "SIZNING_TELEGRAM_USERNAMINGIZ";
+var MY_TELEGRAM_USERNAME = "@Fss_rikxxxxxxxxxxxxxxxxxxxxxxxxx";
 
 const engData=[
 {t:"Grammar • 1",h:"To Be fe'li",d:"Hozirgi zamon shakllari (am, is, are).",f:"I am | He/She/It is | We/You/They are",full:"Ingliz tilida 'to be' fe'li gapda asosiy fe'l bo'lmaganda ishlatiladi. I bilan 'am', birlikda 'is', ko'plikda 'are' keladi.",ex:["I am a student. — Men o'quvchiman.","She is very smart. — U juda aqlli.","They are ready. — Ular tayyor."]},
