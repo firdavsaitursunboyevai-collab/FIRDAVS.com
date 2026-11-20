@@ -77,7 +77,8 @@ document.getElementById('q-box').classList.add('hidden');
 document.getElementById('q-setup').classList.remove('hidden');
 }
 
-function finishQuiz(){
+
+async function finishQuiz(){
 let score=0,review='';
 curQ.forEach((item,i)=>{
 let sel=document.querySelector(`input[name="q${i}"]:checked`);
@@ -91,26 +92,27 @@ let catSelect=document.getElementById('q-cat');
 let catName=catSelect.options[catSelect.selectedIndex].text;
 const curUser=JSON.parse(localStorage.getItem("edu_current_user")||'{"name":"O\'quvchi","login":"guest"}');
 
-let allRes=getAllResults();
-allRes.unshift({name:curUser.name,login:curUser.login,cat:catName,score:`${score}/${curQ.length}`,pct:pct,date:new Date().toLocaleString("uz-UZ",{dateStyle:"short",timeStyle:"short"})});
-localStorage.setItem("edu_all_results",JSON.stringify(allRes));
+const record={name:curUser.name,login:curUser.login,cat:catName,score:`${score}/${curQ.length}`,pct:pct,date:new Date().toLocaleString("uz-UZ",{dateStyle:"short",timeStyle:"short"})};
+await sbFetch("results","POST",record);
 
 document.getElementById('q-box').classList.add('hidden');
 const resDiv=document.getElementById('q-res');
 resDiv.classList.remove('hidden');
-resDiv.innerHTML=`<div class="card" style="text-align:center;margin-bottom:18px"><h2>🎉 Natija: ${score} / ${curQ.length} (${pct}%)</h2><p style="color:#64748b;margin:8px 0 16px">Natijangiz saqlandi!</p><button class="btn btn-primary" onclick="cancelQuiz();resDiv.classList.add('hidden')">🔄 Yana test ishlash</button><button class="btn btn-green" onclick="openTab('results')">🏆 Natijalar jadvali</button></div>${review}`;
+resDiv.innerHTML=`<div class="card" style="text-align:center;margin-bottom:18px"><h2>🎉 Natija: ${score} / ${curQ.length} (${pct}%)</h2><p style="color:#64748b;margin:8px 0 16px">Natijangiz bulutli bazaga saqlandi!</p><button class="btn btn-primary" onclick="cancelQuiz();resDiv.classList.add('hidden')">🔄 Yana test ishlash</button><button class="btn btn-green" onclick="openTab('results')">🏆 Natijalar jadvali</button></div>${review}`;
 loadStats();
 window.scrollTo(0,0);
 }
 
-function loadStats(){
+async function loadStats(){
 const curUser=JSON.parse(localStorage.getItem("edu_current_user")||'null');
 if(!curUser)return;
-const myRes=getAllResults().filter(r=>r.login===curUser.login);
-document.getElementById('st-count').innerText=myRes.length;
-document.getElementById('st-avg').innerText=myRes.length?Math.round(myRes.reduce((a,b)=>a+b.pct,0)/myRes.length)+'%':'0%';
-document.getElementById('res-body').innerHTML=myRes.length?myRes.map(x=>`<tr><td><b>${x.name}</b></td><td>${x.cat}</td><td><b>${x.score}</b></td><td><b>${x.pct}%</b></td><td>${x.date}</td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center">Hozircha natijalaringiz yo\'q</td></tr>';
+const myRes=await sbFetch("results","GET",null,`?login=eq.${curUser.login}&order=id.desc`);
+const list=Array.isArray(myRes)?myRes:[];
+document.getElementById('st-count').innerText=list.length;
+document.getElementById('st-avg').innerText=list.length?Math.round(list.reduce((a,b)=>a+b.pct,0)/list.length)+'%':'0%';
+document.getElementById('res-body').innerHTML=list.length?list.map(x=>`<tr><td><b>${x.name}</b></td><td>${x.cat}</td><td><b>${x.score}</b></td><td><b>${x.pct}%</b></td><td>${x.date}</td></tr>`).join(''):'<tr><td colspan="5" style="text-align:center">Hozircha natijalaringiz yo\'q</td></tr>';
 }
+
 
 render();
 checkAuthSession();

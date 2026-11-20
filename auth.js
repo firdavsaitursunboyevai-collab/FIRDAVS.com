@@ -1,22 +1,24 @@
-// ==========================================
-// LOGIN, SESSION VA ADMIN STATISTIKA TIZIMI
-// ==========================================
+const SUPABASE_URL = "https://supabase.co";
+const SUPABASE_KEY = "sb_publishable_zpAfXMvyJgp8GEU3X7Jk1g_XRN2VS2V";
+
 const ADMIN_LOGIN = "admin";
 const ADMIN_PASS = "admin123";
 
-function getUsers() {
-    return JSON.parse(localStorage.getItem("edu_users") || "[]");
+async function sbFetch(table, method = "GET", body = null, query = "") {
+    const headers = {
+        "apikey": SUPABASE_KEY,
+        "Authorization": "Bearer " + SUPABASE_KEY,
+        "Content-Type": "application/json",
+        "Prefer": "return=representation"
+    };
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/${table}${query}`, {
+        method,
+        headers,
+        body: body ? JSON.stringify(body) : null
+    });
+    return res.json();
 }
 
-function saveUsers(users) {
-    localStorage.setItem("edu_users", JSON.stringify(users));
-}
-
-function getAllResults() {
-    return JSON.parse(localStorage.getItem("edu_all_results") || "[]");
-}
-
-// Sahifa ochilganda foydalanuvchi avval kirganmi yo'qmi tekshirish
 function checkAuthSession() {
     const currentUser = JSON.parse(localStorage.getItem("edu_current_user") || "null");
     if (currentUser) {
@@ -24,7 +26,6 @@ function checkAuthSession() {
         document.getElementById("app-screen").classList.remove("hidden");
         document.getElementById("uname").innerText = currentUser.name + (currentUser.isAdmin ? " (Admin)" : "");
 
-        // Agar Admin bo'lsa, Admin tugmalarini ko'rsatish
         document.querySelectorAll(".admin-only").forEach(el => {
             el.classList.toggle("hidden", !currentUser.isAdmin);
         });
@@ -37,7 +38,6 @@ function checkAuthSession() {
     }
 }
 
-// Login va Ro'yxatdan o'tish oynasini almashtirish
 let isRegisterMode = false;
 function toggleAuthMode() {
     isRegisterMode = !isRegisterMode;
@@ -49,57 +49,60 @@ function toggleAuthMode() {
         : 'Akkauntingiz yo\'qmi? <b style="color:#4f46e5;cursor:pointer" onclick="toggleAuthMode()">Ro\'yxatdan o\'ting</b>';
 }
 
-// Kirish yoki Ro'yxatdan o'tish tugmasi bosilganda
-function handleAuth(e) {
+async function handleAuth(e) {
     e.preventDefault();
+    const btn = document.getElementById("auth-submit-btn");
     const login = document.getElementById("auth-login").value.trim().toLowerCase();
     const pass = document.getElementById("auth-pass").value.trim();
     const name = document.getElementById("auth-name").value.trim();
 
     if (!login || !pass) return alert("Login va parolni kiriting!");
 
-    // 1. ADMIN TEKSHIRUVI
     if (!isRegisterMode && login === ADMIN_LOGIN && pass === ADMIN_PASS) {
-        const adminSession = { name: "Administrator", login: "admin", isAdmin: true };
-        localStorage.setItem("edu_current_user", JSON.stringify(adminSession));
+        localStorage.setItem("edu_current_user", JSON.stringify({ name: "Administrator", login: "admin", isAdmin: true }));
         checkAuthSession();
         return;
     }
 
-    let users = getUsers();
+    btn.disabled = true;
+    btn.innerText = "Kutilmoqda...";
 
-    if (isRegisterMode) {
-        if (!name) return alert("Ismingizni kiriting!");
-        if (login === ADMIN_LOGIN || users.some(u => u.login === login)) {
-            return alert("Bu login band! Boshqa login tanlang.");
+    try {
+        if (isRegisterMode) {
+            if (!name) { btn.disabled = false; btn.innerText = "Ro'yxatdan o'tish"; return alert("Ismingizni kiriting!"); }
+            const existing = await sbFetch("users", "GET", null, `?login=eq.${login}`);
+            if (login === ADMIN_LOGIN || (Array.isArray(existing) && existing.length > 0)) {
+                btn.disabled = false; btn.innerText = "Ro'yxatdan o'tish";
+                return alert("Bu login band! Boshqa login tanlang.");
+            }
+            const newUser = {
+                name: name,
+                login: login,
+                pass: pass,
+                visits: 1,
+                joined: new Date().toLocaleString("uz-UZ", { dateStyle: "short", timeStyle: "short" })
+            };
+            await sbFetch("users", "POST", newUser);
+            localStorage.setItem("edu_current_user", JSON.stringify({ name: newUser.name, login: newUser.login, isAdmin: false }));
+            checkAuthSession();
+        } else {
+            const users = await sbFetch("users", "GET", null, `?login=eq.${login}&pass=eq.${pass}`);
+            if (!Array.isArray(users) || users.length === 0) {
+                btn.disabled = false; btn.innerText = "Kirish";
+                return alert("Login yoki parol noto'g'ri!");
+            }
+            const found = users;
+            await sbFetch("users", "PATCH", { visits: (found.visits || 1) + 1 }, `?id=eq.${found.id}`);
+            localStorage.setItem("edu_current_user", JSON.stringify({ name: found.name, login: found.login, isAdmin: false }));
+            checkAuthSession();
         }
-        const newUser = {
-            name: name,
-            login: login,
-            pass: pass,
-            joined: new Date().toLocaleString("uz-UZ", { dateStyle: "short", timeStyle: "short" }),
-            visits: 1
-        };
-        users.push(newUser);
-        saveUsers(users);
-        localStorage.setItem("edu_current_user", JSON.stringify({ name: newUser.name, login: newUser.login, isAdmin: false }));
-        checkAuthSession();
-    } else {
-        const found = users.find(u => u.login === login && u.pass === pass);
-        if (!found) {
-            return alert("Login yoki parol noto'g'ri! Yangi bo'lsangiz 'Ro'yxatdan o'ting' tugmasini bosing.");
-        }
-        // Kirishlar sonini oshirish
-        found.visits = (found.visits || 1) + 1;
-        found.lastVisit = new Date().toLocaleString("uz-UZ", { dateStyle: "short", timeStyle: "short" });
-        saveUsers(users);
-
-        localStorage.setItem("edu_current_user", JSON.stringify({ name: found.name, login: found.login, isAdmin: false }));
-        checkAuthSession();
+    } catch (err) {
+        alert("Serverga ulanishda xatolik yuz berdi!");
     }
+    btn.disabled = false;
+    btn.innerText = isRegisterMode ? "Ro'yxatdan o'tish" : "Kirish";
 }
 
-// Tizimdan chiqish (Logout)
 function logoutUser() {
     if (confirm("Akkauntdan chiqmoqchimisiz?")) {
         localStorage.removeItem("edu_current_user");
@@ -107,19 +110,16 @@ function logoutUser() {
     }
 }
 
-// Admin Panel ma'lumotlarini yuklash
-function loadAdminPanel() {
-    const users = getUsers();
-    const allResults = getAllResults();
+async function loadAdminPanel() {
+    const users = await sbFetch("users", "GET", null, "?order=id.desc");
+    const allResults = await sbFetch("results", "GET", null, "?order=id.desc");
 
-    document.getElementById("adm-total-users").innerText = users.length;
-    const totalVisits = users.reduce((sum, u) => sum + (u.visits || 1), 0);
+    document.getElementById("adm-total-users").innerText = Array.isArray(users) ? users.length : 0;
+    const totalVisits = Array.isArray(users) ? users.reduce((sum, u) => sum + (u.visits || 1), 0) : 0;
     document.getElementById("adm-total-visits").innerText = totalVisits;
-    document.getElementById("adm-total-tests").innerText = allResults.length;
+    document.getElementById("adm-total-tests").innerText = Array.isArray(allResults) ? allResults.length : 0;
 
-    // Foydalanuvchilar ro'yxati
-    const usersBody = document.getElementById("adm-users-body");
-    usersBody.innerHTML = users.length
+    document.getElementById("adm-users-body").innerHTML = (Array.isArray(users) && users.length)
         ? users.map((u, i) => `
             <tr>
                 <td>${i + 1}</td>
@@ -128,11 +128,9 @@ function loadAdminPanel() {
                 <td>${u.visits || 1} marta</td>
                 <td>${u.joined}</td>
             </tr>`).join("")
-        : '<tr><td colspan="5" style="text-align:center">Hozircha ro\'yxatdan o\'tgan o\'quvchilar yo\'q</td></tr>';
+        : '<tr><td colspan="5" style="text-align:center">Hozircha o\'quvchilar yo\'q</td></tr>';
 
-    // Barcha odamlarning test natijalari
-    const resBody = document.getElementById("adm-results-body");
-    resBody.innerHTML = allResults.length
+    document.getElementById("adm-results-body").innerHTML = (Array.isArray(allResults) && allResults.length)
         ? allResults.map(r => `
             <tr>
                 <td><b>${r.name}</b> <small style="color:#64748b">(@${r.login})</small></td>
@@ -141,5 +139,5 @@ function loadAdminPanel() {
                 <td><span style="color:${r.pct >= 70 ? '#10b981' : '#ef4444'};font-weight:700">${r.pct}%</span></td>
                 <td>${r.date}</td>
             </tr>`).join("")
-        : '<tr><td colspan="5" style="text-align:center">Hozircha hech kim test ishlamagan</td></tr>';
+        : '<tr><td colspan="5" style="text-align:center">Hozircha test natijalari yo\'q</td></tr>';
 }
