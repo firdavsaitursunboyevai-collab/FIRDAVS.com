@@ -30,7 +30,7 @@ let curQ=[];
 function buyPlusModal() {
     const curUser = JSON.parse(localStorage.getItem("edu_current_user") || '{"name":"O\'quvchi","login":"guest"}');
     const text = encodeURIComponent(`Assalomu alaykum! Men EduMaster PRO saytida 💎 PLUS tarifini sotib olmoqchiman.\n👤 Ismim: ${curUser.name}\n🔑 Loginim: ${curUser.login}`);
-    window.open(`https://t.me{MY_TELEGRAM_USERNAME}?text=${text}`, "_blank");
+    window.open(`https://t.me{@Fss_rikxxxxxxxxxxxxxxxxxxxxxxxxx}?text=${text}`, "_blank");
 }
 
 function openTab(id){
