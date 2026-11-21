@@ -554,6 +554,35 @@
                     </table>
                 </div>
             </section>
+                        <section id="plus" class="tab">
+                <div class="top-bar"><h2>🌍 Dunyo Reytingi va 💎 PLUS Tarif</h2></div>
+
+                <div class="card" style="margin-bottom:24px">
+                    <h3 style="margin-bottom:12px">🏆 Eng ko'p to'g'ri test yechganlar (Top Reyting)</h3>
+                    <div style="overflow-x:auto">
+                        <table>
+                            <thead><tr><th>O'rin</th><th>O'quvchi</th><th>Jami to'g'ri javoblar</th><th>Testlar soni</th><th>O'rtacha foiz</th></tr></thead>
+                            <tbody id="leaderboard-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="grid-2">
+                    <div class="card">
+                        <span class="tag" style="background:#e2e8f0;color:#334155">🆓 ODDIY TARIF</span>
+                        <h2 style="margin:6px 0">0 so'm</h2>
+                        <p style="color:#475569;font-size:14px;margin:10px 0 16px">✅ Barcha darslar, 10–20 talik testlar va Dunyo reytingi ochiq.</p>
+                        <button class="btn btn-gray" style="width:100%" disabled>Joriy bepul tarif</button>
+                    </div>
+                    <div class="card" style="border:2px solid #f59e0b;background:#fffbeb">
+                        <span class="tag" style="background:#fef3c7;color:#b45309">💎 PLUS TARIF</span>
+                        <h2 style="margin:6px 0;color:#b45309">29 000 so'm</h2>
+                        <p style="color:#334155;font-size:14px;margin:10px 0 16px">✅ <b>50–100 talik</b> katta imtihonlar, <b>🎓 Sertifikat</b> va profil yonida <b>💎 PLUS</b> nishoni.</p>
+                        <button id="buy-plus-btn" class="btn" style="width:100%;background:#f59e0b;color:#fff" onclick="buyPlusModal()">💎 PLUS Sotib Olish</button>
+                    </div>
+                </div>
+            </section>
+
 
             <section id="admin" class="tab">
              <div class="top-bar">
@@ -617,13 +646,17 @@
             <button data-t="math" onclick="openTab('math')">📐<small>Math</small></button>
             <button data-t="quiz" onclick="openTab('quiz')">⚡<small>Test</small></button>
             <button data-t="results" onclick="openTab('results')">🏆<small>Natija</small></button>
+            <button data-t="plus" onclick="openTab('plus')" style="color:#d97706">🌍<small>Reyting</small></button>
+
+
             <button class="admin-only hidden" data-t="admin" onclick="openTab('admin')"
                 style="color:#dc2626">👑<small>Admin</small></button>
         </nav>
     </div>
-    <script>
-        document.write('<scr' + 'ipt src="https://cdn.jsdelivr.' + 'net/npm/@supabase/supabase-js@2"></scr' + 'ipt>');
-    </script>
+   <script>
+document.write('<scr' + 'ipt src="https://cdn.jsdelivr.' + 'net/npm/@supabase/supabase-js@2"></scr' + 'ipt>');
+</script>
+
 
     <script src="questions.js"></script>
     <script src="auth.js"></script>

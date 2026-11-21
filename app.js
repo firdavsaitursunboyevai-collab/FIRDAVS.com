@@ -148,42 +148,40 @@ async function loadLeaderboard() {
         buyBtn.style.background = "#10b981";
     }
 
-    if (!curUser.isPlus) {
-        document.getElementById("leaderboard-locked").classList.remove("hidden");
-        document.getElementById("leaderboard-open").classList.add("hidden");
-        return;
+    const tbody = document.getElementById("leaderboard-body");
+    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Yuklanmoqda...</td></tr>';
+
+    try {
+        const allRes = await sbFetch("results", "GET", null, "?order=id.desc");
+        const users = await sbFetch("users", "GET", null, "");
+        const plusMap = {};
+        if (Array.isArray(users)) users.forEach(u => plusMap[u.login] = u.is_plus);
+
+        const stats = {};
+        allRes.forEach(r => {
+            if (!stats[r.login]) stats[r.login] = { name: r.name, login: r.login, totalCorrect: 0, tests: 0, pctSum: 0 };
+            const corr = r.correct_count || parseInt((r.score || "0").split("/")[0]) || 0;
+            stats[r.login].totalCorrect += corr;
+            stats[r.login].tests += 1;
+            stats[r.login].pctSum += r.pct;
+        });
+
+        const sorted = Object.values(stats).sort((a, b) => b.totalCorrect - a.totalCorrect);
+        const medals = ["🥇 1-o'rin", "🥈 2-o'rin", "🥉 3-o'rin"];
+
+        tbody.innerHTML = sorted.length
+            ? sorted.map((s, idx) => `
+                <tr style="${s.login === curUser.login ? 'background:#fefce8;' : ''}">
+                    <td><b>${medals[idx] || (idx + 1) + "-o'rin"}</b></td>
+                    <td><b>${s.name}</b> ${plusMap[s.login] ? '💎' : ''}</td>
+                    <td><b style="color:#4f46e5;font-size:16px">${s.totalCorrect} ta</b></td>
+                    <td>${s.tests} ta test</td>
+                    <td><b>${Math.round(s.pctSum / s.tests)}%</b></td>
+                </tr>`).join("")
+            : '<tr><td colspan="5" style="text-align:center">Hali natijalar yo\'q</td></tr>';
+    } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:red">Yuklashda xatolik: ' + e.message + '</td></tr>';
     }
-
-    document.getElementById("leaderboard-locked").classList.add("hidden");
-    document.getElementById("leaderboard-open").classList.remove("hidden");
-
-    const allRes = await sbFetch("results", "GET", null, "?order=id.desc");
-    const users = await sbFetch("users", "GET", null, "");
-    const plusMap = {};
-    if (Array.isArray(users)) users.forEach(u => plusMap[u.login] = u.is_plus);
-
-    const stats = {};
-    allRes.forEach(r => {
-        if (!stats[r.login]) stats[r.login] = { name: r.name, login: r.login, totalCorrect: 0, tests: 0, pctSum: 0 };
-        const corr = r.correct_count || parseInt((r.score || "0").split("/")[0]) || 0;
-        stats[r.login].totalCorrect += corr;
-        stats[r.login].tests += 1;
-        stats[r.login].pctSum += r.pct;
-    });
-
-    const sorted = Object.values(stats).sort((a, b) => b.totalCorrect - a.totalCorrect);
-    const medals = ["🥇 1-o'rin", "🥈 2-o'rin", "🥉 3-o'rin"];
-
-    document.getElementById("leaderboard-body").innerHTML = sorted.length
-        ? sorted.map((s, idx) => `
-            <tr style="${s.login === curUser.login ? 'background:#fefce8;' : ''}">
-                <td><b>${medals[idx] || (idx + 1) + "-o'rin"}</b></td>
-                <td><b>${s.name}</b> ${plusMap[s.login] ? '💎' : ''}</td>
-                <td><b style="color:#4f46e5;font-size:16px">${s.totalCorrect} ta</b></td>
-                <td>${s.tests} ta test</td>
-                <td><b>${Math.round(s.pctSum / s.tests)}%</b></td>
-            </tr>`).join("")
-        : '<tr><td colspan="5" style="text-align:center">Hali natijalar yo\'q</td></tr>';
 }
 
 function downloadCert(name, subject, pct) {
@@ -193,13 +191,14 @@ function downloadCert(name, subject, pct) {
             <h1 style="color:#4f46e5;font-size:36px;margin-bottom:10px">🎓 SERTIFIKAT</h1>
             <p style="color:#64748b;font-size:16px">EduMaster PRO Xalqaro Ta'lim Platformasi</p>
             <hr style="margin:25px 0;border:1px solid #e2e8f0">
-Ushbu sertifikat egasi:
-${name}
-${subject} yo'nalishi bo'yicha imtihondan ${pct}% natija ko'rsatib, muvaffaqiyatli tamomladi.
-Sana: ${new Date().toLocaleDateString("uz-UZ")} • Tasdiqlangan: 💎 EduMaster PRO
-🖨️ Chop etish / PDF saqlash
-
-`);
+            <p style="font-size:18px">Ushbu sertifikat egasi:</p>
+            <h2 style="font-size:32px;color:#0f172a;margin:12px 0">${name}</h2>
+            <p style="font-size:18px;line-height:1.6"><b>${subject}</b> yo'nalishi bo'yicha imtihondan <b>${pct}%</b> natija ko'rsatib, muvaffaqiyatli tamomladi.</p>
+            <p style="margin-top:40px;color:#64748b;font-size:14px">Sana: ${new Date().toLocaleDateString("uz-UZ")} • Tasdiqlangan: 💎 EduMaster PRO</p>
+            <button onclick="window.print()" style="margin-top:25px;padding:12px 24px;background:#4f46e5;color:#fff;border:none;border-radius:8px;font-size:16px;cursor:pointer">🖨️ Chop etish / PDF saqlash</button>
+        </div>
+    `);
 }
+
 render();
 checkAuthSession();
