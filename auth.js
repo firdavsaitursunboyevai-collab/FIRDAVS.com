@@ -60,6 +60,8 @@ async function checkAuthSession() {
             try {
                 const fresh = await sbFetch("users", "GET", null, `?login=eq.${currentUser.login}`);
                 if (fresh && fresh.length > 0) {
+                    currentUser.avatar = fresh[0].avatar || "";
+
                     currentUser.isPlus = !!fresh[0].is_plus;
                     localStorage.setItem("edu_current_user", JSON.stringify(currentUser));
                 }
@@ -70,6 +72,12 @@ async function checkAuthSession() {
 
         document.getElementById("auth-screen").classList.add("hidden");
         document.getElementById("app-screen").classList.remove("hidden");
+
+        if (currentUser.avatar) {
+    document.getElementById("nav-avatar").src = currentUser.avatar;
+    document.getElementById("nav-avatar").classList.remove("hidden");
+    document.getElementById("nav-avatar-icon").classList.add("hidden");
+}
 
         const plusBadge = currentUser.isPlus ? ' <span style="background:#f59e0b;color:#fff;padding:2px 6px;border-radius:6px;font-size:10px">💎 PLUS</span>' : '';
         document.getElementById("uname").innerHTML = currentUser.name + (currentUser.isAdmin ? " (Admin)" : "") + plusBadge;
