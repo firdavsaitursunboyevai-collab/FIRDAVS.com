@@ -89,6 +89,9 @@ if (topPlusBtn) topPlusBtn.classList.toggle("hidden", currentUser.isPlus || curr
         });
 
         loadStats();
+        if (typeof loadVocabTab === "function") loadVocabTab();
+if (typeof loadCertTab === "function") loadCertTab();
+
         if (currentUser.isAdmin) loadAdminPanel();
     } else {
         document.getElementById("auth-screen").classList.remove("hidden");
