@@ -42,7 +42,12 @@ function openTab(id){
     if(id==='results'||id==='home')loadStats();
     if(id==='admin')loadAdminPanel();
     if(id==='plus')loadLeaderboard();
+        if(id==='plus')loadLeaderboard();
+    if(id==='vocab')loadVocabTab();
+    if(id==='cert')loadCertTab();
     window.scrollTo(0,0);
+
+  
 }
 
 function render(){
