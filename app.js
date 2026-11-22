@@ -204,6 +204,39 @@ function downloadCert(name, subject, pct) {
         </div>
     `);
 }
+const dailyFormulas = [
+    { t: "Pifagor Teoremasi", f: "a² + b² = c²" },
+    { t: "Kvadrat Tenglama Diskriminanti", f: "D = b² - 4ac  |  x₁,₂ = (-b ± √D) / 2a" },
+    { t: "Qisqa Ko'paytirish Formulasi", f: "(a + b)² = a² + 2ab + b²  |  a² - b² = (a - b)(a + b)" },
+    { t: "Asosiy Trigonometrik Ayniyat", f: "sin²α + cos²α = 1  |  tgα = sinα / cosα" },
+    { t: "Doira Yuzi va Uzunligi", f: "S = πR²  |  L = 2πR" }
+];
+
+let currentDailyWord = "Achieve";
+function initHomeWidgets() {
+    if (typeof vocabBank !== "undefined" && vocabBank.length > 0) {
+        const w = vocabBank[Math.floor(Math.random() * vocabBank.length)];
+        currentDailyWord = w.w;
+        const elW = document.getElementById("daily-word");
+        if (elW) {
+            elW.innerText = w.w;
+            document.getElementById("daily-word-tr").innerText = w.tr;
+            document.getElementById("daily-word-ex").innerText = `"${w.ex}"`;
+        }
+    }
+    const df = dailyFormulas[Math.floor(Math.random() * dailyFormulas.length)];
+    const elF = document.getElementById("daily-formula-title");
+    if (elF) {
+        elF.innerText = df.t;
+        document.getElementById("daily-formula-code").innerText = df.f;
+    }
+}
+
+function speakDailyWord() {
+    if (typeof speakWord === "function") speakWord(currentDailyWord);
+}
 
 render();
+initHomeWidgets();
 checkAuthSession();
+
