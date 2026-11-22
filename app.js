@@ -239,4 +239,16 @@ function speakDailyWord() {
 render();
 initHomeWidgets();
 checkAuthSession();
+function toggleTheme() {
+    const isDark = document.body.classList.toggle("dark-mode");
+    localStorage.setItem("edu_dark_mode", isDark ? "1" : "0");
+    const btn = document.getElementById("theme-toggle-btn");
+    if (btn) btn.innerText = isDark ? "☀️" : "🌙";
+}
+
+if (localStorage.getItem("edu_dark_mode") === "1") {
+    document.body.classList.add("dark-mode");
+    const btn = document.getElementById("theme-toggle-btn");
+    if (btn) btn.innerText = "☀️";
+}
 

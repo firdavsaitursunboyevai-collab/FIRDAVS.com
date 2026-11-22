@@ -383,6 +383,26 @@
                 font-size: 10px
             }
         }
+        /* 🌙 TUN REJIMI (DARK MODE) STILLARI */
+body.dark-mode { background: #0f172a; color: #f8fafc; }
+body.dark-mode header,
+body.dark-mode .m-nav { background: #1e293b; border-color: #334155; }
+body.dark-mode .card,
+body.dark-mode .auth-card,
+body.dark-mode .lesson-view { background: #1e293b !important; color: #f8fafc !important; border-color: #334155 !important; }
+body.dark-mode .formula,
+body.dark-mode .example-box,
+body.dark-mode .opt { background: #0f172a; color: #e2e8f0; border-color: #334155; }
+body.dark-mode .inp,
+body.dark-mode .search,
+body.dark-mode select { background: #0f172a; color: #fff; border-color: #334155; }
+body.dark-mode table { background: #1e293b; color: #f8fafc; }
+body.dark-mode th { background: #0f172a; color: #94a3b8; border-color: #334155; }
+body.dark-mode td { border-color: #334155; }
+body.dark-mode .menu button { color: #cbd5e1; }
+body.dark-mode .menu button.active { background: #312e81; color: #a5b4fc; }
+body.dark-mode .user-btn { background: #334155; color: #f8fafc; border-color: #475569; }
+
     </style>
 </head>
 
@@ -439,6 +459,10 @@
                 </div>
                 <div style="display:flex;align-items:center;gap:8px">
     <div style="display:flex;align-items:center;gap:8px">
+        <button id="theme-toggle-btn" class="btn btn-gray" onclick="toggleTheme()" title="Kun/Tun rejimi" style="padding:7px 11px;font-size:15px;border-radius:50%">
+    🌙
+</button>
+
     <button id="top-plus-btn" class="btn" onclick="buyPlusModal()" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:6px 12px;font-size:12px;border-radius:20px">
         💎 PLUS olish
     </button>
